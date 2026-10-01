@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "drone-autonomy-sim"
+version = "1.0.0"
+description = "Onboard autonomous decision-making for drones: sense-decide-act loop, A* planning, dynamic replanning, and battery-aware return-to-home"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Sajid Kabir Saji" }]
+requires-python = ">=3.10"
+keywords = ["uav", "drone", "autonomy", "path-planning", "a-star", "simulation", "decision-making"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.urls]
+Homepage = "https://github.com/sajidkabir/drone-autonomy-sim"
+Repository = "https://github.com/sajidkabir/drone-autonomy-sim"
+Issues = "https://github.com/sajidkabir/drone-autonomy-sim/issues"
+Changelog = "https://github.com/sajidkabir/drone-autonomy-sim/blob/main/CHANGELOG.md"
+
+[project.scripts]
+drone-autonomy = "drone_autonomy_sim.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/drone_autonomy_sim"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
