@@ -46,6 +46,10 @@ behavior, not just the plumbing.
 - **Explainable decision log**: every sense, plan, replan, evaluation,
   return, and landing is recorded as a (step, state, action, reason)
   entry.
+- **Scenario library**: four named, fully reproducible missions on
+  larger grids (up to 60 by 24), each defined as a readable ASCII map
+  plus scripted surprise-obstacle events. `drone-autonomy scenarios`
+  lists them; `drone-autonomy run --scenario NAME` flies one.
 - **CLI demo**: a built-in scenario with a wall, one gap, and a surprise
   obstacle, with the full decision log and an ASCII map of the flight.
 
@@ -77,8 +81,9 @@ drone-autonomy run
 ```
 
 ```text
-Drone autonomy demo mission
-  World:         14 x 9 grid, wall with a gap at x=9, y=4
+Drone autonomy mission: Wall and gap (demo)
+  Scenario:      demo
+  World:         14 x 9 grid, 8 obstacles
   Start:         (0, 4)   Goal: (13, 4)
   Battery:       45.0 units (reserve margin 2.0)
   Sensor radius: 3 cells
@@ -134,6 +139,55 @@ drone-autonomy run --sensor-radius 1.5
 
 A shorter sensor radius means the surprise obstacle is seen later and
 the detour gets tighter.
+
+### Larger scenarios
+
+The demo is a 14 by 9 world. Real missions are bigger, so the package
+ships a small library of named scenarios on larger grids. Each one is a
+frozen ASCII map plus scripted surprise events: fully reproducible, no
+random numbers at run time.
+
+```bash
+drone-autonomy scenarios
+```
+
+| Scenario    | World   | The mission                                             |
+|-------------|---------|---------------------------------------------------------|
+| `demo`      | 14 x 9  | Wall with one gap; one surprise on the flight path.     |
+| `gauntlet`  | 34 x 20 | Three staggered walls with offset gaps, plus a surprise |
+|             |         | dropped onto the flight path mid-mission.               |
+| `long_haul` | 60 x 12 | A long corridor with a battery that cannot reach the    |
+|             |         | goal: the honest outcome is a safe return home.         |
+| `clutter`   | 40 x 24 | A scattered obstacle field with one surprise: a stress  |
+|             |         | test for repeated replanning.                           |
+
+```bash
+drone-autonomy run --scenario gauntlet
+drone-autonomy run --scenario long_haul
+```
+
+`long_haul` is the interesting one for the decision layer: the drone
+flies out, discovers the goal is out of reach once the surprise forces
+a replan, and turns home while the battery still allows it. `gauntlet`
+is the interesting one for the planner: 67 steps of sense, replan, and
+evaluate through three walls. In Python:
+
+```python
+from drone_autonomy_sim import get_scenario, run_mission
+
+scenario = get_scenario("clutter")
+result = run_mission(
+    scenario.world.copy(),
+    scenario.start,
+    scenario.goal,
+    list(scenario.events),
+    scenario.battery,
+)
+print(result.success, result.steps)
+```
+
+(Copy the scenario world before flying: `run_mission` adds the event
+obstacles to the world it is given.)
 
 ### Python API
 

@@ -8,6 +8,7 @@ a safe return. Every decision is logged with its reason.
 
 from .agent import AgentState, DecisionEntry, DroneAgent
 from .planning import find_path, path_cost
+from .scenarios import Scenario, get_scenario, scenario_names, world_from_ascii
 from .simulation import (
     MissionResult,
     ObstacleEvent,
@@ -16,7 +17,7 @@ from .simulation import (
 )
 from .world import Cell, GridWorld
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 __all__ = [
     "AgentState",
@@ -26,9 +27,13 @@ __all__ = [
     "GridWorld",
     "MissionResult",
     "ObstacleEvent",
+    "Scenario",
     "build_demo_scenario",
     "find_path",
+    "get_scenario",
     "path_cost",
     "run_mission",
+    "scenario_names",
+    "world_from_ascii",
     "__version__",
 ]

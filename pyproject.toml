@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "drone-autonomy-sim"
-version = "1.0.0"
+version = "1.1.0"
 description = "Onboard autonomous decision-making for drones: sense-decide-act loop, A* planning, dynamic replanning, and battery-aware return-to-home"
 readme = "README.md"
 license = { text = "MIT" }

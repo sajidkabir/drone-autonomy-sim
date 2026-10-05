@@ -1,20 +1,25 @@
 """Command-line interface for drone-autonomy-sim.
 
 Usage:
-    drone-autonomy run [--battery N] [--sensor-radius R]
-                       [--reserve-margin M]
+    drone-autonomy run [--scenario NAME] [--battery N]
+                       [--sensor-radius R] [--reserve-margin M]
+    drone-autonomy scenarios
 
-The demo mission: a wall with a single gap, a surprise obstacle dropped
-onto the flight path mid-mission, and a battery sized so the agent has to
-make real decisions. Try ``drone-autonomy run --battery 20`` to watch the
-same scenario end with the drone abandoning the mission and coming home.
+The default mission is the demo: a wall with a single gap, a surprise
+obstacle dropped onto the flight path mid-mission, and a battery sized
+so the agent has to make real decisions. Try
+``drone-autonomy run --battery 20`` to watch the same scenario end with
+the drone abandoning the mission and coming home, or
+``drone-autonomy run --scenario long_haul`` to watch the battery guard
+force a safe return on a much larger map.
 """
 
 from __future__ import annotations
 
 import argparse
 
-from .simulation import build_demo_scenario, run_mission
+from .scenarios import get_scenario, scenario_names
+from .simulation import run_mission
 from .world import GridWorld
 
 
@@ -40,13 +45,15 @@ def _render_map(world: GridWorld, start, goal, path_taken) -> str:
 
 
 def _run_demo(args: argparse.Namespace) -> int:
-    world, start, goal, events, battery = build_demo_scenario()
-    if args.battery is not None:
-        battery = args.battery
+    scenario = get_scenario(args.scenario)
+    world, start, goal = scenario.world, scenario.start, scenario.goal
+    events = list(scenario.events)
+    battery = scenario.battery if args.battery is None else args.battery
 
-    print("Drone autonomy demo mission")
+    print(f"Drone autonomy mission: {scenario.title}")
+    print(f"  Scenario:      {scenario.name}")
     print(f"  World:         {world.width} x {world.height} grid, "
-          f"wall with a gap at x=9, y=4")
+          f"{len(world.obstacles)} obstacles")
     print(f"  Start:         {start}   Goal: {goal}")
     print(f"  Battery:       {battery:.1f} units "
           f"(reserve margin {args.reserve_margin:.1f})")
@@ -57,7 +64,7 @@ def _run_demo(args: argparse.Namespace) -> int:
     print()
 
     result = run_mission(
-        world,
+        world.copy(),
         start,
         goal,
         events,
@@ -83,24 +90,40 @@ def _run_demo(args: argparse.Namespace) -> int:
     return 0 if result.success else 1
 
 
+def _list_scenarios() -> int:
+    print("Built-in scenarios")
+    for name in scenario_names():
+        scenario = get_scenario(name)
+        world = scenario.world
+        print(f"  {name:<10} {world.width:>3} x {world.height:<3} "
+              f"{scenario.title}")
+        print(f"             {scenario.description}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="drone-autonomy",
         description="Onboard autonomous decision-making simulator for drones.",
     )
     sub = parser.add_subparsers(dest="command", required=True)
-    run = sub.add_parser("run", help="run the built-in demo mission")
+    run = sub.add_parser("run", help="run a mission scenario")
+    run.add_argument("--scenario", default="demo", choices=scenario_names(),
+                     help="which built-in scenario to fly (default: demo)")
     run.add_argument("--battery", type=float, default=None,
                      help="starting battery in energy units "
-                          "(default: demo value)")
+                          "(default: scenario value)")
     run.add_argument("--sensor-radius", type=float, default=3.0,
                      help="sensor radius in cells (default: 3)")
     run.add_argument("--reserve-margin", type=float, default=2.0,
                      help="battery reserve kept for the flight home "
                           "(default: 2)")
+    sub.add_parser("scenarios", help="list the built-in mission scenarios")
     args = parser.parse_args(argv)
     if args.command == "run":
         return _run_demo(args)
+    if args.command == "scenarios":
+        return _list_scenarios()
     return 2
 
 
